@@ -1,25 +1,25 @@
 # meta_data_tools.py
+import nltk
+import pandas as pd
+import re
 import string
 import sys
 
-import pandas as pd
 
 class MetaDataTools:
     """Static methods to work with Meta Data"""
 
     @staticmethod
-    def remove_punctuation_from_text(text: str) -> str:
-        """Remove punctuation from text
-        :param text: source text to process
+    def cleanse_text_in_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         """
-        text_no_punctuation = ''.join([char for char in text if char not in string.punctuation])
-        return text_no_punctuation
+        Cleanse textual data held in a DataFrame. Excludes column names.
 
-    @staticmethod
-    def remove_punctuation_from_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+        :param df: DataFrame to process
+        :returns: DataFrame with text cleansed.
+        """        
         new_df = pd.DataFrame()
         for column in df.columns:
-            new_df[column] = df[column].apply(lambda x: MetaDataTools.remove_punctuation_from_text(str.lower(x)))
+            new_df[column] = df[column].apply(lambda x: MetaDataTools.cleanse_text(x))
 
         return new_df
 
@@ -29,7 +29,68 @@ class MetaDataTools:
         return raw_data
 
     @staticmethod
-    def identify_descriptor_column(df: pd.DataFrame) -> str:
+    def cleanse_text(text: str) -> list:
+        """Pre process text prior to tokenizing
+        Make lower case
+        Replace apostrophes and quotes with nothing, other punctuation with a space
+
+        :param text: original text
+        :return: processed text as list
+        """
+        # Make all lower case first
+        text = str.lower(text)
+        # Punctuation removal then swap out other marks for spaces
+        to_remove = ["'", '"']
+
+        for item in to_remove:
+            text = text.replace(item, '')
+
+        for item in string.punctuation:
+            text = text.replace(item, ' ')
+
+        # Tokenize, without stop words
+        stopwords = nltk.corpus.stopwords.words('english')
+        tokens = re.split('\W+', text)
+        text = [word for word in tokens if word not in stopwords and len(word) > 0]
+
+        return text
+
+    @staticmethod
+    def stemming(tokenized_text: list, stemmer=nltk.LancasterStemmer()):
+        """Stem stemmed_text by optionally chosen stemmer
+        :param tokenized_text: list of words to be stemmed; assumes already pre-processed
+        :param stemmer: NLTK stemmer (default LancasterStemmer)
+        :return: list of stemmed words
+        """
+        stemmed_text = [stemmer.stem(word) for word in tokenized_text]
+        return stemmed_text
+
+    @staticmethod
+    def identify_descriptor_column(df: pd.DataFrame) -> list:
+        """Attempt to identify the column of a DataFrame holding descriptions of field names.
+
+        Returns the first column found that may hold a description, going to column name only.
+
+        :param df: DataFrame to process
+        :return: List [descriptor column index, original descriptor column name]. If none found, returns [-1, ''].
+        """
+        lancaster = nltk.LancasterStemmer()
+        descriptor_stem = lancaster.stem('description')
+
+        clean_columns = []
         for column in df.columns:
-            column = str.lower(column)
-        return 'STILL TO DO'
+            clean_columns.append(MetaDataTools.cleanse_text(column))
+
+        stemmed_columns = [MetaDataTools.stemming(column, lancaster) for column in clean_columns]
+
+        descriptor_column = ''
+        descriptor_column_index = -1
+
+        for column in stemmed_columns:
+            if descriptor_stem in column:
+                descriptor_column_index = stemmed_columns.index(column)
+                break
+
+        descriptor_column = df.columns[descriptor_column_index]
+
+        return [descriptor_column_index, descriptor_column]
