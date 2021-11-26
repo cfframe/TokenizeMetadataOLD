@@ -121,3 +121,33 @@ class MetaDataTools:
         descriptions = [MetaDataTools.cleanse_text(text) for text in df[df.columns[descriptor_column_index]]]
 
         return [field_names, descriptions]
+
+    @staticmethod
+    def field_tokenized_descriptor_df_from_df(df: pd.DataFrame) -> pd.DataFrame:
+        """Derive a reduced DataFrame of field names against tokenized descriptions from a source DataFrame.
+
+        Assume that Field names are the first column, and that if only two columns then
+        the second column is the descriptors.
+
+        :param df: Source DataFrame.
+        :returns: See description.
+        """
+
+        if len(df.columns) < 2:
+            raise Exception('Data set has too few columns.')
+        elif len(df.columns) == 2:
+            descriptor_column_index = 1
+        else:
+            descriptor_column_index = MetaDataTools.identify_descriptor_column(df)[0]
+            if descriptor_column_index < 0:
+                raise Exception('No descriptor column identified for DataFrame.')
+
+        cleansed_df = df[df.columns[[0, descriptor_column_index]]]
+        cleansed_df = MetaDataTools.cleanse_text_in_dataframe(cleansed_df)
+
+        new_df = pd.DataFrame()
+
+        new_df['Fields'] = cleansed_df[cleansed_df.columns[0]].apply(lambda x: ' '.join(x))
+        new_df['TokenizedDescriptors'] = cleansed_df[cleansed_df.columns[1]]
+
+        return new_df

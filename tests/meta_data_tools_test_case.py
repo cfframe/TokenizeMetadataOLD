@@ -87,7 +87,7 @@ class MetaDataToolsTestCase(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
-    def test_field_tokenized_descriptor_list_from_df__when_valid__returns_paired_series(self):
+    def test_field_tokenized_descriptor_list_from_df__when_valid__returns_paired_series_list(self):
         # Column index is first part of pairing returned
         sub_tests = [['2 columns', self.Test2ColDataFrame], ['4 columns', self.Test4ColDataFrame]]
         for sub_test in sub_tests:
@@ -95,10 +95,9 @@ class MetaDataToolsTestCase(unittest.TestCase):
                 print(f'Testing for: {sub_test[0]}')
                 fdl = MDT.field_tokenized_descriptor_list_from_df(sub_test[1])
 
-                # ALSO TEST for when no descriptor identified - decide whether to proceed or not
                 self.assertTrue(len(fdl) == 2)
                 self.assertTrue(fdl[0].__class__.__name__ == 'Series')
-                self.assertTrue(fdl[1].__class__.__name__ == 'Series')
+                self.assertTrue(fdl[1].__class__.__name__ == 'list')
 
     def test_field_tokenized_descriptor_list_from_df__when_invalid__raises_exception(self):
         # Column index is first part of pairing returned
@@ -112,6 +111,12 @@ class MetaDataToolsTestCase(unittest.TestCase):
         fdl = MDT.field_tokenized_descriptor_list_from_df(self.Test2ColDataFrame)
         expected = ['institution']
         actual = fdl[1][0]
+        self.assertEqual(expected, actual)
+
+    def test_field_tokenized_descriptor_df_from_df__when_valid__tokenizes_data(self):
+        fdl = MDT.field_tokenized_descriptor_df_from_df(self.Test2ColDataFrame)
+        expected = ['institution']
+        actual = fdl[fdl.columns[1]][0]
         self.assertEqual(expected, actual)
 
 
