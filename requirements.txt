@@ -7,3 +7,4 @@ pillow~=8.4.0               # For PIL
 scikit-learn~=1.0.1
 scikit-image~=0.18.2
 matplotlib~=3.5.0
+openpyxl~=3.0.9

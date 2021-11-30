@@ -1,22 +1,30 @@
 # meta_data_tools_test_case.py
 from pathlib import Path
-
+from src.file_tools import FileTools
 import nltk
 import pandas as pd
 import os
 import unittest
 from src.meta_data_tools import MetaDataTools as MDT
+from src.custom_exceptions import DataFrameException
 
 
 class MetaDataToolsTestCase(unittest.TestCase):
     def setUp(self):
         """Fixtures used by tests."""
         self.Root = Path(__file__).parent
+        self.Temp = os.path.join(self.Root, 'temp_meta_data_tools')
         self.TestDataDir = os.path.join(self.Root, 'test_data')
+        self.Test2ColFile = os.path.join(self.TestDataDir, 'test_tsv_2_cols.txt')
         self.Test4ColDataFrame = MDT.read_raw_data(os.path.join(self.TestDataDir, 'test_tsv_4_cols.txt'))
         self.TestNoDescDataFrame = MDT.read_raw_data(os.path.join(self.TestDataDir, 'test_no_desc_tsv.txt'))
         self.Test1ColDataFrame = MDT.read_raw_data(os.path.join(self.TestDataDir, 'test_tsv_1_col.txt'))
-        self.Test2ColDataFrame = MDT.read_raw_data(os.path.join(self.TestDataDir, 'test_tsv_2_cols.txt'))
+        self.Test2ColDataFrame = MDT.read_raw_data(self.Test2ColFile)
+
+        FileTools.ensure_empty_directory(self.Temp)
+
+    def tearDown(self) -> None:
+        FileTools.ensure_empty_directory(self.Temp)
 
     def test_read_raw_data__raw_data_has_expected_shape(self):
         df = self.Test4ColDataFrame
@@ -105,7 +113,7 @@ class MetaDataToolsTestCase(unittest.TestCase):
         for sub_test in sub_tests:
             with self.subTest(self):
                 print(f'Testing for: {sub_test[0]}')
-                self.assertRaises(Exception, MDT.field_tokenized_descriptor_list_from_df, sub_test[1])
+                self.assertRaises(DataFrameException, MDT.field_tokenized_descriptor_list_from_df, sub_test[1])
 
     def test_field_tokenized_descriptor_list_from_df__when_valid__tokenizes_data(self):
         fdl = MDT.field_tokenized_descriptor_list_from_df(self.Test2ColDataFrame)
@@ -114,10 +122,91 @@ class MetaDataToolsTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     def test_field_tokenized_descriptor_df_from_df__when_valid__tokenizes_data(self):
-        fdl = MDT.field_tokenized_descriptor_df_from_df(self.Test2ColDataFrame)
+        fdl = MDT.field_tokenized_descriptor_df_from_df(self.Test2ColDataFrame, 'test_name')
+
         expected = ['institution']
-        actual = fdl[fdl.columns[1]][0]
+        actual = fdl['TokenizedDescriptors'][0]
         self.assertEqual(expected, actual)
+
+    def test_field_descriptors_df_from_file__when_valid_file(self):
+        src_path = self.Test2ColFile
+        target_dir = self.Temp
+        prefix = 'dummy'
+
+        with self.subTest(self):
+            print('Testing for: empty directory pre-test')
+            expected = 0
+            actual = len([name for name in os.listdir(self.Temp) if os.path.isfile(os.path.join(self.Temp, name))])
+            self.assertEqual(expected, actual)
+
+        result = MDT.field_descriptors_df_from_file(src_path, target_dir, prefix, to_save=True)
+
+        with self.subTest(self):
+            print('Testing for: return DataFrame')
+            expected = 'DataFrame'
+            actual = result.__class__.__name__
+            self.assertEqual(expected, actual)
+
+        with self.subTest(self):
+            print('Testing for: save processed file')
+            expected = 1
+            actual = len([name for name in os.listdir(self.Temp) if os.path.isfile(os.path.join(self.Temp, name))])
+            self.assertTrue(expected, actual)
+
+    def test_dict_of_field_descriptors_dfs_from_files(self):
+        src_path = self.TestDataDir
+        target_dir = self.Temp
+        prefix = 'dummy'
+
+        dataframes, errors = MDT.dict_of_field_descriptors_dfs_from_files(src_path, target_dir, prefix, to_save=True)
+
+        with self.subTest():
+            testing_for = 'Expected number of returned DataFrames'
+            print(f'Testing for: {testing_for}')
+            expected = 2
+            actual = len(dataframes)
+
+            self.assertEqual(expected, actual)
+
+        with self.subTest():
+            testing_for = 'Expected number of errors'
+            print(f'Testing for: {testing_for}')
+            # expected = len([name for name in os.listdir(src_path) if os.path.isfile(os.path.join(src_path, name))])
+            expected = 2
+            actual = len(errors)
+
+            self.assertEqual(expected, actual)
+
+    def test_list_of_field_descriptors_dfs_from_files(self):
+        src_path = self.TestDataDir
+        target_dir = self.Temp
+        prefix = 'dummy'
+
+        dataframes, errors = MDT.list_of_field_descriptors_dfs_from_files(src_path, target_dir, prefix, to_save=True)
+
+        with self.subTest():
+            testing_for = 'Expected number of returned DataFrames'
+            print(f'Testing for: {testing_for}')
+            expected = 2
+            actual = len(dataframes)
+
+            self.assertEqual(expected, actual)
+
+        with self.subTest():
+            testing_for = 'Expected number of errors'
+            print(f'Testing for: {testing_for}')
+            # expected = len([name for name in os.listdir(src_path) if os.path.isfile(os.path.join(src_path, name))])
+            expected = 2
+            actual = len(errors)
+
+            self.assertEqual(expected, actual)
+
+    def test_save_dfs(self):
+        dataframes, errors = MDT.list_of_field_descriptors_dfs_from_files(
+            src_path=self.TestDataDir, target_dir=self.Temp, prefix='from_list', to_save=False)
+
+        MDT.save_dfs(df_list=dataframes, save_dir=self.Temp, save_name='all_data.txt', prefix='dummy_')
+        self.assertTrue(Path(os.path.join(self.Temp, 'dummy_all_data.txt')).is_file())
 
 
 if __name__ == '__main__':
