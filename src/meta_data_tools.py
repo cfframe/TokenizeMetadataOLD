@@ -184,19 +184,20 @@ class MetaDataTools:
 
     @staticmethod
     def dict_of_field_descriptors_dfs_from_files(src_path: str, target_dir: str, prefix: str = '',
-                                                 to_save: bool = False) -> (dict, list):
+                                                 to_save: bool = False, suffix: str = '.txt') -> (dict, list):
         """Process files in folder to generate a dictionary of DataFrames of fields vs tokenized descriptors
 
         :param src_path: Source path to directory holding files to process.
         :param target_dir: Folder where temporary and final files are to be saved.
         :param prefix: Optional string for prefixing the final filename.
-        :param to_save: Bool - whether to save the file to the working directory (default: False).
+        :param to_save: Whether to save the file to the working directory (default: False).
+        :param suffix: Suffix of source files (default: .txt).
         :return: Dict, List. Dictionary of DataFrames and list of files with errors.
         """
         df_dict = {}
         errors = []
         for root, dirs, files in os.walk(src_path, topdown=False):
-            for file_name in files:
+            for file_name in [file_name for file_name in files if Path(file_name).suffix == suffix]:
                 file_path = os.path.join(src_path, file_name)
                 try:
                     df = MetaDataTools.field_descriptors_df_from_file(file_path, target_dir, prefix, to_save=to_save)
@@ -209,19 +210,20 @@ class MetaDataTools:
 
     @staticmethod
     def list_of_field_descriptors_dfs_from_files(src_path: str, target_dir: str, prefix: str = '',
-                                                 to_save: bool = False) -> (list, list):
+                                                 to_save: bool = False, suffix: str = '.txt') -> (list, list):
         """Process files in folder to generate a list of DataFrames of fields vs tokenized descriptors
 
         :param src_path: Source path to directory holding files to process.
         :param target_dir: Folder where temporary and final files are to be saved.
         :param prefix: Optional string for prefixing the final filename.
-        :param to_save: Bool - whether to save the file to the working directory (default: False).
-        :return: List, List. Dictionary of DataFrames and list of files with errors.
+        :param to_save: Whether to save the file to the working directory (default: False).
+        :param suffix: Suffix of source files (default: .txt).
+        :return: List, List. List of DataFrames and list of files with errors.
         """
         df_list = []
         errors = []
         for root, dirs, files in os.walk(src_path, topdown=False):
-            for file_name in files:
+            for file_name in [file_name for file_name in files if Path(file_name).suffix == suffix]:
                 file_path = os.path.join(src_path, file_name)
                 try:
                     df = MetaDataTools.field_descriptors_df_from_file(file_path, target_dir, prefix, to_save=to_save)
@@ -241,11 +243,14 @@ class MetaDataTools:
         :param prefix: optional prefix to main file name
         """
 
-        collate_dfs = pd.concat(df_list)
-        collate_dfs.reset_index(inplace=True, drop=True)
+        if len(df_list) > 0:
+            collate_dfs = pd.concat(df_list)
+            collate_dfs.reset_index(inplace=True, drop=True)
 
-        save_path = os.path.join(save_dir, f'{prefix}{save_name}')
-        # Open file with newline='' to prevent blank intermediate lines
-        with open(save_path, 'w', encoding='utf-8', newline='') as outfile:
-            outfile.write(collate_dfs.to_csv(sep='\t', index=False))
-            print('Data from dataframes  saved to {}.'.format(save_path))
+            save_path = os.path.join(save_dir, f'{prefix}{save_name}')
+            # Open file with newline='' to prevent blank intermediate lines
+            with open(save_path, 'w', encoding='utf-8', newline='') as outfile:
+                outfile.write(collate_dfs.to_csv(sep='\t', index=False))
+                print('Data from dataframes  saved to {}.'.format(save_path))
+        else:
+            print('No data frames saved.')
