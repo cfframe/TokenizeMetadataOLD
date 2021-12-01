@@ -10,7 +10,7 @@ class MetaDataTestCase(unittest.TestCase):
         """Fixtures used by tests."""
         self.Root = Path(__file__).parent
         self.TestDataDir = os.path.join(self.Root, 'test_data')
-        self.TsvFilePath = os.path.join(self.TestDataDir, 'test_tsv_4_cols.txt')
+        self.TsvFilePath = os.path.join(self.TestDataDir, 'test_tsv_5_cols_inc_labels.txt')
 
     def test_read_raw_data__raw_data_has_expected_shape(self):
         md = MetaData(self.TsvFilePath)

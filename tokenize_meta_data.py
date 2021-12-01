@@ -7,7 +7,7 @@ from src.meta_data_tools import MetaDataTools
 import os
 from pathlib import Path
 
-TEST_FILEPATH = os.path.join(Path(__file__).parent, 'tests', 'test_data', 'test_tsv_4_cols.txt')
+TEST_FILEPATH = os.path.join(Path(__file__).parent, 'tests', 'test_data', 'test_tsv_5_cols_inc_labels.txt')
 
 """
 Description: Read in a data dictionary file and output a tokenized version.
@@ -66,7 +66,12 @@ def main():
             print(err)
 
         save_name = f'collated.tsv'
-        MetaDataTools.save_dfs(df_list=df_list, save_name=save_name, save_dir=target_dir, prefix=prefix)
+
+        collated_dfs = MetaDataTools.collate_dfs_from_list(df_list=df_list, save_name=save_name, save_dir=target_dir, prefix=prefix)
+
+        if len(collated_dfs) > 0:
+            print('First few records in collated DataFrames:\n')
+            print(collated_dfs.head())
 
 
 if __name__ == '__main__':

@@ -21,9 +21,11 @@ class MetaDataTools:
         :returns: DataFrame with text cleansed.
         """        
         new_df = pd.DataFrame()
-        new_df[df.columns[0]] = df[df.columns[0]].apply(lambda x: str.lower(x))
-        for column in df.columns[1:]:
-            new_df[column] = df[column].apply(lambda x: MetaDataTools.cleanse_text(x))
+        new_df[df.columns[0]] = df[df.columns[0]].apply(lambda x: str.lower(str(x)))
+        new_df[df.columns[1]] = df[df.columns[1]].apply(lambda x: MetaDataTools.cleanse_text(str(x)))
+        if len(df.columns) == 3:
+            # Has label column
+            new_df[df.columns[2]] = df[df.columns[2]].apply(lambda x: str.lower(str(x)))
 
         return new_df
 
@@ -102,19 +104,23 @@ class MetaDataTools:
         return [descriptor_column_index, descriptor_column]
 
     @staticmethod
-    def field_tokenized_descriptor_list_from_df(df: pd.DataFrame) -> list:
+    def field_tokenized_descriptor_list_from_df(df: pd.DataFrame, is_labelled: bool = False) -> list:
         """Derive a list of field names against descriptions from a DataFrame.
 
         Assume that Field names are the first column, and that if only two columns then
         the second column is the descriptors.
 
         :param df: Source DataFrame.
+        :param is_labelled: Whether DataFrame includes labels column. Assumed to be last column.
         :returns: See description.
         """
+        min_column_count = 2
+        if is_labelled:
+            min_column_count = 3
 
-        if len(df.columns) < 2:
-            raise DataFrameException('Data set has too few columns, should have at least two.')
-        elif len(df.columns) == 2:
+        if len(df.columns) < min_column_count:
+            raise DataFrameException(f'Data set has too few columns, should have at least {min_column_count}.')
+        elif len(df.columns) == min_column_count:
             descriptor_column_index = 1
         else:
             descriptor_column_index = MetaDataTools.identify_descriptor_column(df)[0]
@@ -123,37 +129,51 @@ class MetaDataTools:
 
         field_names = df[df.columns[0]]
         descriptions = [MetaDataTools.cleanse_text(text) for text in df[df.columns[descriptor_column_index]]]
+        result = [field_names, descriptions]
 
-        return [field_names, descriptions]
+        if is_labelled:
+            labels = df[df.columns[min_column_count - 1]]
+            result.append(labels)
+
+        return result
 
     @staticmethod
-    def field_tokenized_descriptor_df_from_df(df: pd.DataFrame, source: str) -> pd.DataFrame:
+    def field_tokenized_descriptor_df_from_df(df: pd.DataFrame, source: str, is_labelled: bool = False) -> pd.DataFrame:
+        # CFF add is_labelled, see field_tokenized_descriptor_list_from_df.
         """Derive a reduced DataFrame of field names against tokenized descriptions from a source DataFrame.
 
-        Assume that Field names are the first column, and that if only two columns then
-        the second column is the descriptors.
+        Assume that Field names are the first column, and that if only a minimum number of columns (2 if not labelled,
+        3 if labelled) then the second column is the descriptors.
 
-        :param df: Source DataFrame.
+        If designated as labelled, assume the last column is the labels.
+
+        :param df: Source DataFrame, added as first column in DataFrame.
         :param source: Source of data.
+        :param is_labelled: Whether labelled (Default: False)
         :returns: DataFrame. See description.
         """
 
-        if len(df.columns) < 2:
+        min_column_count = 2
+        if is_labelled:
+            min_column_count = 3
+
+        if len(df.columns) < min_column_count:
             raise DataFrameException('Data set has too few columns, should have at least two.')
-        elif len(df.columns) == 2:
+        elif len(df.columns) == min_column_count:
             descriptor_column_index = 1
         else:
             descriptor_column_index = MetaDataTools.identify_descriptor_column(df)[0]
             if descriptor_column_index < 0:
                 raise DataFrameException('No descriptor column identified for DataFrame.')
 
-        cleansed_df = df[df.columns[[0, descriptor_column_index]]]
-        cleansed_df = MetaDataTools.cleanse_text_in_dataframe(cleansed_df)
+        cleansed_df = pd.DataFrame()
+        cleansed_df['Fields'] = df[df.columns[0]]
+        cleansed_df['TokenizedDescriptors'] = df[df.columns[descriptor_column_index]]
 
-        new_df = pd.DataFrame()
+        if is_labelled:
+            cleansed_df['Labels'] = df[df.columns[len(df.columns) - 1]]
+        new_df = MetaDataTools.cleanse_text_in_dataframe(cleansed_df)
 
-        new_df['Fields'] = cleansed_df[cleansed_df.columns[0]]
-        new_df['TokenizedDescriptors'] = cleansed_df[cleansed_df.columns[1]]
         new_df.insert(0, 'Source', source)
 
         return new_df
@@ -165,8 +185,8 @@ class MetaDataTools:
 
         :param src_path: Path to source file.
         :param target_dir: Path to directory for saving files.
-        :param prefix: Optional string to use as a common prefix for saving files.
-        :param to_save: Bool - whether to save the file to the working directory (default: False).
+        :param prefix: String to use as a common prefix for saving files (default: '').
+        :param to_save: Whether to save the file to the working directory (default: False).
         :return: DataFrame of processed data.
         """
         df = MetaDataTools.read_raw_data(src_path)
@@ -189,7 +209,7 @@ class MetaDataTools:
 
         :param src_path: Source path to directory holding files to process.
         :param target_dir: Folder where temporary and final files are to be saved.
-        :param prefix: Optional string for prefixing the final filename.
+        :param prefix: String for prefixing the final filename (default: '').
         :param to_save: Whether to save the file to the working directory (default: False).
         :param suffix: Suffix of source files (default: .txt).
         :return: Dict, List. Dictionary of DataFrames and list of files with errors.
@@ -215,9 +235,9 @@ class MetaDataTools:
 
         :param src_path: Source path to directory holding files to process.
         :param target_dir: Folder where temporary and final files are to be saved.
-        :param prefix: Optional string for prefixing the final filename.
+        :param prefix: String for prefixing the final filename (default: '').
         :param to_save: Whether to save the file to the working directory (default: False).
-        :param suffix: Suffix of source files (default: .txt).
+        :param suffix: Suffix of source files (default: '.txt').
         :return: List, List. List of DataFrames and list of files with errors.
         """
         df_list = []
@@ -234,23 +254,32 @@ class MetaDataTools:
         return df_list, errors
 
     @staticmethod
-    def save_dfs(df_list: list, save_dir: str, save_name: str, prefix: str = ''):
+    def collate_dfs_from_list(df_list: list, save_dir: str = '', save_name: str = '', prefix: str = '') -> pd.DataFrame:
         """Save list of DataFrames
 
-        :param df_list: list of DataFrames
-        :param save_dir: target directory
-        :param save_name: target file name
-        :param prefix: optional prefix to main file name
+        :param df_list: List of DataFrames. Expect all to have same number of columns.
+        :param save_dir: Target directory (default: '').
+        :param save_name: Target file name (default: '').
+        :param prefix: Prefix to main file name (default: '').
+        :return: Collation of list elements as a single DataFrame.
         """
 
-        if len(df_list) > 0:
-            collate_dfs = pd.concat(df_list)
-            collate_dfs.reset_index(inplace=True, drop=True)
+        collated_dfs = pd.DataFrame()
 
-            save_path = os.path.join(save_dir, f'{prefix}{save_name}')
-            # Open file with newline='' to prevent blank intermediate lines
-            with open(save_path, 'w', encoding='utf-8', newline='') as outfile:
-                outfile.write(collate_dfs.to_csv(sep='\t', index=False))
-                print('Data from dataframes  saved to {}.'.format(save_path))
+        if len(df_list) > 0:
+
+            collated_dfs = pd.concat(df_list)
+            collated_dfs.reset_index(inplace=True, drop=True)
+
+            if len(save_dir) > 0 and len(save_name) > 0:
+                save_path = os.path.join(save_dir, f'{prefix}{save_name}')
+                # Open file with newline='' to prevent blank intermediate lines
+                with open(save_path, 'w', encoding='utf-8', newline='') as outfile:
+                    outfile.write(collated_dfs.to_csv(sep='\t', index=False))
+                    print('Data from DataFrames saved to {}.'.format(save_path))
+            else:
+                print('No DataFrames saved.')
         else:
-            print('No data frames saved.')
+            print('No DataFrames saved.')
+
+        return collated_dfs

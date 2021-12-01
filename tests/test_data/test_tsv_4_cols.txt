@@ -1,3 +1,0 @@
-Fields	Some Description	Table	Table Field
-EINRI	An Institution;'&	TN01	EINRI
-FALAR	IS-H & Fred: Case Type	NBEW	FALAR
