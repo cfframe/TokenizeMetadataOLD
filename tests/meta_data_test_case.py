@@ -17,7 +17,7 @@ class MetaDataTestCase(unittest.TestCase):
 
         pd.set_option('display.max_colwidth', 100)
         print(md.raw_data.head())
-        self.assertEqual(md.raw_data.shape, (17, 4))
+        self.assertEqual(md.raw_data.shape, (2, 5))
 
 
 if __name__ == '__main__':

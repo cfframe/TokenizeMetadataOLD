@@ -13,13 +13,13 @@ TEST_FILEPATH = os.path.join(Path(__file__).parent, 'tests', 'test_data', 'test_
 Description: Read in a data dictionary file and output a tokenized version.
 
 Example usage:
-py tokenize_meta_data.py -sf "C:/temp/TableMetaData/Source/SAP IS-H Case Attribute.txt" -wd C:/temp/TableMetaData/Results 
-py tokenize_meta_data.py -sf "C:/temp/TableMetaData/Source" -d -wd C:/temp/TableMetaData/Results 
+py tokenize_meta_data.py -s "C:/temp/TableMetaData/Source/SAP IS-H Case Attribute.txt" -td C:/temp/TableMetaData/Results 
+py tokenize_meta_data.py -s "C:/temp/TableMetaData/Source" -d -td C:/temp/TableMetaData/Results 
 """
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Extract fields, labels and tokenized descriptors from Excel file.')
+    parser = argparse.ArgumentParser(description='Extract fields, labels and tokenized descriptors from TSV files.')
     parser.add_argument('-s', '--src_path', type=str, default=TEST_FILEPATH,
                         help='Source path for processing. Assume a file, but use is_directory flag if a folder.')
     parser.add_argument('-d', '--is_directory', action='store_true',
@@ -67,7 +67,8 @@ def main():
 
         save_name = f'collated.tsv'
 
-        collated_dfs = MetaDataTools.collate_dfs_from_list(df_list=df_list, save_name=save_name, save_dir=target_dir, prefix=prefix)
+        collated_dfs = MetaDataTools.collate_dfs_from_list(df_list=df_list, save_name=save_name, save_dir=target_dir,
+                                                           prefix=prefix)
 
         if len(collated_dfs) > 0:
             print('First few records in collated DataFrames:\n')

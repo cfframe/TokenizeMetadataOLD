@@ -11,19 +11,17 @@ from pathlib import Path
 TEST_FILEPATH = os.path.join(Path(__file__).parent, 'tests', 'test_data', 'test_xls.xlsx')
 
 """
-Description: Read in a data dictionary file and output a tokenized version.
+Description: Extract fields, tokenized descriptors and labels from data dictionary. 
 
 Example usage:
-py tokenize_labelled_meta_data.py -s "C:/temp/TableMetaData/Source/FCRB_Data Model_v0.5 CFF 1f.xlsm" -td C:/temp/TableMetaData/Results 
+py tokenize_labelled_meta_data.py -s "C:/temp/TableMetaData/Source/FCRB_Data Model_v0.5 CFF 1g.xlsm" -td C:/temp/TableMetaData/Results 
 """
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Extract fields and tokenized descriptors from data dictionary.')
     parser.add_argument('-s', '--src_path', type=str, default=TEST_FILEPATH,
-                        help='Source path for processing. Assume a file, but use is_directory flag if a folder.')
-    # parser.add_argument('-d', '--is_directory', action='store_true',
-    #                     help='Indicates src_path is a directory and not a file')
+                        help='Source path for processing.')
     parser.add_argument('-td', '--target_dir', type=str, default=Path(__file__).parent,
                         help='Working directory for saving files etc')
 
