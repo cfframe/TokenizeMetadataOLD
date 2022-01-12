@@ -1,4 +1,4 @@
-# meta_data_tools_test_case.py
+# test_meta_data_tools.py
 from pathlib import Path
 from src.file_tools import FileTools
 import nltk
@@ -11,7 +11,7 @@ from src.custom_exceptions import DataFrameException
 
 class MetaDataToolsTestCase(unittest.TestCase):
     def setUp(self):
-        """Fixtures used by tests."""
+        """Fixtures used by test."""
         self.Root = Path(__file__).parent
         self.Temp = os.path.join(self.Root, 'temp_meta_data_tools')
         self.TestDataDir = os.path.join(self.Root, 'test_data')
@@ -39,8 +39,8 @@ class MetaDataToolsTestCase(unittest.TestCase):
         test_df = self.Test5ColIncLabelDataFrame
         new_df = MDT.cleanse_text_in_dataframe(test_df)
 
-        expected = ['institution']
-        actual = new_df['Some Description'][0]
+        expected = 'h,fred,case,type'
+        actual = new_df['Some Description'][1]
         self.assertEqual(expected, actual)
 
     def test_cleanse_text__remove_specified_punctuation(self):
@@ -132,15 +132,15 @@ class MetaDataToolsTestCase(unittest.TestCase):
 
     def test_field_tokenized_descriptor_list_from_df__when_valid__tokenizes_data(self):
         fdl = MDT.field_tokenized_descriptor_list_from_df(self.Test2ColDataFrame)
-        expected = ['institution']
+        expected = 'institution'
         actual = fdl[1][0]
         self.assertEqual(expected, actual)
 
     def test_field_tokenized_descriptor_df_from_df__when_valid__tokenizes_data(self):
         fdl = MDT.field_tokenized_descriptor_df_from_df(self.Test2ColDataFrame, 'test_name')
 
-        expected = ['institution']
-        actual = fdl['TokenizedDescriptors'][0]
+        expected = 'h,fred,case,type'
+        actual = fdl['TokenizedDescriptors'][1]
         self.assertEqual(expected, actual)
 
     def test_field_tokenized_descriptor_df_from_df__when_labelled__includes_label_column(self):

@@ -7,7 +7,7 @@ from src.meta_data import MetaData
 
 class MetaDataTestCase(unittest.TestCase):
     def setUp(self):
-        """Fixtures used by tests."""
+        """Fixtures used by test."""
         self.Root = Path(__file__).parent
         self.TestDataDir = os.path.join(self.Root, 'test_data')
         self.TsvFilePath = os.path.join(self.TestDataDir, 'test_tsv_5_cols_inc_labels.txt')

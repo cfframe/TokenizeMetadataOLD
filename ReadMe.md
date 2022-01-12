@@ -9,6 +9,21 @@ One way of installing requirements: <br />
 <code>py -m pip install --upgrade pip</code><br />
 <code>pip install -r requirements.txt</code>
 
+###Testing
+Using unittest. Can run all tests for all files with a single command in the Terminal window.
+
+<code>
+python -m unittest
+</code>
+
+Requirements for this
+<ul>
+<li>top level test directory to be named "test/"</li>
+<li>empty file in test directory named "__init__.py"</li>
+<li>test case file name format: "test_*.py"</li>
+<li>tests encapsulated in unittest.TestCase classes</li>
+</ul>
+
 ## Usage
 ### tokenize_meta_data.py
 Extract fields, labels and tokenized descriptors from a TSV file or an Excel file.

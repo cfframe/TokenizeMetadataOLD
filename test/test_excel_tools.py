@@ -6,7 +6,7 @@ from src.excel_tools import ExcelTools
 
 class ExcelToolsTestCase(unittest.TestCase):
     def setUp(self):
-        """Fixtures used by tests."""
+        """Fixtures used by test."""
         self.Root = Path(__file__).parent
         self.TestDataDir = os.path.join(self.Root, 'test_data')
         self.XlsxFilePath = os.path.join(self.TestDataDir, 'test_xls.xlsx')

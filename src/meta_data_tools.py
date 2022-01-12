@@ -22,7 +22,7 @@ class MetaDataTools:
         """        
         new_df = pd.DataFrame()
         new_df[df.columns[0]] = df[df.columns[0]].apply(lambda x: str.lower(str(x)))
-        new_df[df.columns[1]] = df[df.columns[1]].apply(lambda x: MetaDataTools.cleanse_text(str(x)))
+        new_df[df.columns[1]] = df[df.columns[1]].apply(lambda x: ','.join(MetaDataTools.cleanse_text(str(x))))
         if len(df.columns) == 3:
             # Has label column
             new_df[df.columns[2]] = df[df.columns[2]].apply(lambda x: str.lower(str(x)))
@@ -128,7 +128,7 @@ class MetaDataTools:
                 raise DataFrameException('No descriptor column identified for DataFrame.')
 
         field_names = df[df.columns[0]]
-        descriptions = [MetaDataTools.cleanse_text(text) for text in df[df.columns[descriptor_column_index]]]
+        descriptions = [','.join(MetaDataTools.cleanse_text(text)) for text in df[df.columns[descriptor_column_index]]]
         result = [field_names, descriptions]
 
         if is_labelled:
@@ -139,7 +139,6 @@ class MetaDataTools:
 
     @staticmethod
     def field_tokenized_descriptor_df_from_df(df: pd.DataFrame, source: str, is_labelled: bool = False) -> pd.DataFrame:
-        # CFF add is_labelled, see field_tokenized_descriptor_list_from_df.
         """Derive a reduced DataFrame of field names against tokenized descriptions from a source DataFrame.
 
         Assume that Field names are the first column, and that if only a minimum number of columns (2 if not labelled,

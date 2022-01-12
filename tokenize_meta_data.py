@@ -7,7 +7,7 @@ from src.meta_data_tools import MetaDataTools
 import os
 from pathlib import Path
 
-TEST_FILEPATH = os.path.join(Path(__file__).parent, 'tests', 'test_data', 'test_tsv_5_cols_inc_labels.txt')
+TEST_FILEPATH = os.path.join(Path(__file__).parent, 'test', 'test_data', 'test_tsv_5_cols_inc_labels.txt')
 
 """
 Description: Read in a data dictionary file and output a tokenized version.

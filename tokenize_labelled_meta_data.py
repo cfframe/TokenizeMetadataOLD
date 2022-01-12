@@ -8,7 +8,7 @@ import os
 import pandas as pd
 from pathlib import Path
 
-TEST_FILEPATH = os.path.join(Path(__file__).parent, 'tests', 'test_data', 'test_xls.xlsx')
+TEST_FILEPATH = os.path.join(Path(__file__).parent, 'test', 'test_data', 'test_xls.xlsx')
 
 """
 Description: Extract fields, tokenized descriptors and labels from data dictionary. 
