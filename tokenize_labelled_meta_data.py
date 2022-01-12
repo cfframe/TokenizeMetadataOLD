@@ -52,7 +52,7 @@ def main():
     df_list = [MetaDataTools.field_tokenized_descriptor_df_from_df(df=v, source=k, is_labelled=True)
                for k, v in df_dict.items()
                if k != 'Status list']
-    save_name = f'labelled.tsv'
+    save_name = f'labelled.txt'
     MetaDataTools.collate_dfs_from_list(df_list=df_list, save_name=save_name, save_dir=target_dir, prefix=prefix)
 
 

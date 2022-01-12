@@ -192,7 +192,7 @@ class MetaDataTools:
 
         field_descriptors = MetaDataTools.field_tokenized_descriptor_df_from_df(df, Path(src_path).stem)
         if to_save:
-            save_name = f'{prefix}_ProcessedDF {Path(src_path).stem}.tsv'
+            save_name = f'{prefix}_ProcessedDF {Path(src_path).stem}.txt'
             save_path = os.path.join(Path(target_dir), save_name)
             # Open file with newline='' to prevent blank intermediate lines
             with open(save_path, 'w', encoding='utf-8', newline='') as outfile:

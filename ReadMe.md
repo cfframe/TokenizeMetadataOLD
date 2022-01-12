@@ -46,7 +46,7 @@ py tokenize_meta_data.py -s "C:/temp/TableMetaData/Source/SAP IS-H Case Attribut
 
 ### tokenize_labelled_meta_data.py
 Extract fields, tokenized descriptors and labels from data dictionary (Excel workbook) and output a tokenized version 
-as a TSV file.
+as a TXT file.
 
 Expected format of the input Excel workbook:
 - Worksheet 'Status list'. This is ignored in processing.
