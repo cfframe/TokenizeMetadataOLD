@@ -13,19 +13,36 @@ class MetaDataTools:
     """Static methods to work with Meta Data"""
 
     @staticmethod
-    def cleanse_text_in_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    def cleanse_text_in_dataframe(df: pd.DataFrame, columns_to_lower: list, columns_to_tokenize: list) -> pd.DataFrame:
         """
         Cleanse textual data held in a DataFrame. Excludes column names.
 
+        Assumptions:
+        - Always has columns 'Fields'
+        - Optionally has 1 or more of 'Source' and 'Labels'
+
         :param df: DataFrame to process.
+        :param columns_to_tokenize: list of column indices to tokenize.
+        :param columns_to_lower: list of column indices to de-capitalise text.
         :returns: DataFrame with text cleansed.
-        """        
+        """
         new_df = pd.DataFrame()
-        new_df[df.columns[0]] = df[df.columns[0]].apply(lambda x: str.lower(str(x)))
-        new_df[df.columns[1]] = df[df.columns[1]].apply(lambda x: ','.join(MetaDataTools.cleanse_text(str(x))))
-        if len(df.columns) == 3:
-            # Has label column
-            new_df[df.columns[2]] = df[df.columns[2]].apply(lambda x: str.lower(str(x)))
+
+        for i in columns_to_lower:
+            new_df[df.columns[i]] = df[df.columns[i]].apply(lambda x: str.lower(str(x)))
+        for i in columns_to_tokenize:
+            new_df[df.columns[i]] = df[df.columns[i]]
+            new_df['Tokenized ' + df.columns[i]] \
+                = df[df.columns[i]].apply(lambda x: ','.join(MetaDataTools.cleanse_text(str(x))))
+
+        # Arrange columns in logical order
+        if 'Source' in new_df.columns:
+            col = new_df.pop('Source')
+            new_df.insert(0, col.name, col)
+
+        if 'Labels' in new_df.columns:
+            col = new_df.pop('Labels')
+            new_df[col.name] = col
 
         return new_df
 
@@ -165,15 +182,23 @@ class MetaDataTools:
             if descriptor_column_index < 0:
                 raise DataFrameException('No descriptor column identified for DataFrame.')
 
-        cleansed_df = pd.DataFrame()
-        cleansed_df['Fields'] = df[df.columns[0]]
-        cleansed_df['TokenizedDescriptors'] = df[df.columns[descriptor_column_index]]
+        # Once fully generated, cleansed_df will have these columns, potentially with different names:
+        # - 0 - Source
+        # - 1 - Fields
+        # - 2 - Descriptors
+        # - 3 - [optional] Labels
+        df_to_cleanse = pd.DataFrame()
+        df_to_cleanse['Fields'] = df[df.columns[0]]
+        df_to_cleanse['Descriptors'] = df[df.columns[descriptor_column_index]]
 
+        columns_to_lower = [1]
+        columns_to_tokenize = [0, 2]
         if is_labelled:
-            cleansed_df['Labels'] = df[df.columns[len(df.columns) - 1]]
-        new_df = MetaDataTools.cleanse_text_in_dataframe(cleansed_df)
+            df_to_cleanse['Labels'] = df[df.columns[len(df.columns) - 1]]
+            columns_to_lower.append(3)
+        df_to_cleanse.insert(0, 'Source', source)
 
-        new_df.insert(0, 'Source', source)
+        new_df = MetaDataTools.cleanse_text_in_dataframe(df_to_cleanse, columns_to_lower, columns_to_tokenize)
 
         return new_df
 

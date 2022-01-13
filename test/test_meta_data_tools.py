@@ -35,12 +35,14 @@ class MetaDataToolsTestCase(unittest.TestCase):
         print(df.head())
         self.assertEqual((2, 5), df.shape)
 
-    def test_cleanse_text_in_dataframe__returns_dataframe_without_punctuation(self):
+    def test_cleanse_text_in_dataframe__returns_dataframe_with_punctuation_stripped(self):
         test_df = self.Test5ColIncLabelDataFrame
-        new_df = MDT.cleanse_text_in_dataframe(test_df)
+        columns_to_lower = [0, 4]
+        columns_to_tokenize = [1]
+        new_df = MDT.cleanse_text_in_dataframe(test_df, columns_to_lower, columns_to_tokenize)
 
         expected = 'h,fred,case,type'
-        actual = new_df['Some Description'][1]
+        actual = new_df['Tokenized Some Description'][1]
         self.assertEqual(expected, actual)
 
     def test_cleanse_text__remove_specified_punctuation(self):
@@ -140,13 +142,13 @@ class MetaDataToolsTestCase(unittest.TestCase):
         fdl = MDT.field_tokenized_descriptor_df_from_df(self.Test2ColDataFrame, 'test_name')
 
         expected = 'h,fred,case,type'
-        actual = fdl['TokenizedDescriptors'][1]
+        actual = fdl['Tokenized Descriptors'][1]
         self.assertEqual(expected, actual)
 
     def test_field_tokenized_descriptor_df_from_df__when_labelled__includes_label_column(self):
         fdl = MDT.field_tokenized_descriptor_df_from_df(self.Test5ColIncLabelDataFrame, 'test_name', is_labelled=True)
 
-        self.assertTrue(fdl.columns[len(fdl.columns) - 1] == 'Labels')
+        self.assertTrue('Labels' in fdl.columns)
 
     def test_field_descriptors_df_from_file__when_valid_file(self):
         src_path = self.Test2ColFile
