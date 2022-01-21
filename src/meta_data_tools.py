@@ -13,7 +13,8 @@ class MetaDataTools:
     """Static methods to work with Meta Data"""
 
     @staticmethod
-    def cleanse_text_in_dataframe(df: pd.DataFrame, columns_to_lower: list, columns_to_tokenize: list) -> pd.DataFrame:
+    def cleanse_text_in_dataframe(df: pd.DataFrame, columns_to_lower: list, columns_to_tokenize: list,
+                                  sep: str = ',') -> pd.DataFrame:
         """
         Cleanse textual data held in a DataFrame. Excludes column names.
 
@@ -24,6 +25,7 @@ class MetaDataTools:
         :param df: DataFrame to process.
         :param columns_to_tokenize: list of column indices to tokenize.
         :param columns_to_lower: list of column indices to de-capitalise text.
+        :param sep: separator for words in cleansed text.
         :returns: DataFrame with text cleansed.
         """
         new_df = pd.DataFrame()
@@ -33,7 +35,7 @@ class MetaDataTools:
         for i in columns_to_tokenize:
             new_df[df.columns[i]] = df[df.columns[i]]
             new_df['Tokenized ' + df.columns[i]] \
-                = df[df.columns[i]].apply(lambda x: ','.join(MetaDataTools.cleanse_text(str(x))))
+                = df[df.columns[i]].apply(lambda x: sep.join(MetaDataTools.cleanse_text(str(x))))
 
         # Arrange columns in logical order
         if 'Source' in new_df.columns:
@@ -155,7 +157,7 @@ class MetaDataTools:
         return result
 
     @staticmethod
-    def field_tokenized_descriptor_df_from_df(df: pd.DataFrame, source: str, is_labelled: bool = False) -> pd.DataFrame:
+    def field_tokenized_descriptor_df_from_df(df: pd.DataFrame, source: str, is_labelled: bool = False, sep: str = ',') -> pd.DataFrame:
         """Derive a reduced DataFrame of field names against tokenized descriptions from a source DataFrame.
 
         Assume that Field names are the first column, and that if only a minimum number of columns (2 if not labelled,
@@ -166,6 +168,7 @@ class MetaDataTools:
         :param df: Source DataFrame, added as first column in DataFrame.
         :param source: Source of data.
         :param is_labelled: Whether labelled (Default: False)
+        :param sep: String separator in tokenized text. (Default ',')
         :returns: DataFrame. See description.
         """
 
@@ -198,7 +201,7 @@ class MetaDataTools:
             columns_to_lower.append(3)
         df_to_cleanse.insert(0, 'Source', source)
 
-        new_df = MetaDataTools.cleanse_text_in_dataframe(df_to_cleanse, columns_to_lower, columns_to_tokenize)
+        new_df = MetaDataTools.cleanse_text_in_dataframe(df_to_cleanse, columns_to_lower, columns_to_tokenize, sep)
 
         return new_df
 
@@ -278,13 +281,10 @@ class MetaDataTools:
         return df_list, errors
 
     @staticmethod
-    def collate_dfs_from_list(df_list: list, save_dir: str = '', save_name: str = '', prefix: str = '') -> pd.DataFrame:
+    def collate_dfs_from_list(df_list: list) -> pd.DataFrame:
         """Save list of DataFrames
 
         :param df_list: List of DataFrames. Expect all to have same number of columns.
-        :param save_dir: Target directory (default: '').
-        :param save_name: Target file name (default: '').
-        :param prefix: Prefix to main file name (default: '').
         :return: Collation of list elements as a single DataFrame.
         """
 
@@ -295,15 +295,45 @@ class MetaDataTools:
             collated_dfs = pd.concat(df_list)
             collated_dfs.reset_index(inplace=True, drop=True)
 
+        return collated_dfs
+
+    @staticmethod
+    def save_df(df: pd.DataFrame, save_dir: str = '', save_name: str = '', prefix: str = '', sep: str = '\t'):
+        """Save list of DataFrames
+
+        :param df: DataFrame.
+        :param save_dir: Target directory (default: '').
+        :param save_name: Target file name (default: '').
+        :param prefix: Prefix to main file name (default: '').
+        :param sep: Separator (default: '\t')
+        """
+
+        if len(df) > 0:
+
             if len(save_dir) > 0 and len(save_name) > 0:
                 save_path = os.path.join(save_dir, f'{prefix}{save_name}')
                 # Open file with newline='' to prevent blank intermediate lines
                 with open(save_path, 'w', encoding='utf-8', newline='') as outfile:
-                    outfile.write(collated_dfs.to_csv(sep='\t', index=False))
+                    outfile.write(df.to_csv(sep=sep, index=False))
                     print('Data from DataFrames saved to {}.'.format(save_path))
             else:
                 print('No DataFrames saved.')
         else:
             print('No DataFrames saved.')
 
-        return collated_dfs
+        return df
+
+    @staticmethod
+    def prep_df_for_bert(df: pd.DataFrame) -> pd.DataFrame:
+        """Save list of DataFrames
+
+        :param df: DataFrame.
+        :return: DataFrame, first column is category and second is text.
+        """
+        new_df = pd.DataFrame()
+        new_df['category'] = df['Labels']
+
+        new_df['text'] = df[['Tokenized Source', 'Fields', 'Tokenized Descriptors']].agg(' '.join, axis=1)
+
+        return new_df
+

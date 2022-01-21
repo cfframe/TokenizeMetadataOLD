@@ -1,0 +1,3 @@
+Fields	Some Description	Table	Table	Labels
+EINRI	An Institution;'&	TN01	EINRI	key
+FALAR	IS-H & Fred: Case Type	NBEW	FALAR	object

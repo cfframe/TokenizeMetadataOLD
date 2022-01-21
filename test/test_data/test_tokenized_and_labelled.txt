@@ -1,0 +1,3 @@
+Source	Fields	Tokenized Source	Descriptors	Tokenized Descriptors	Labels
+Pacient DM	patnr	pacient,dm	Patient ID Number	patient,id,number	key
+Pacient DM	gschl	pacient,dm	Genere (Sex)	genere,sex	person

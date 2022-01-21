@@ -15,8 +15,10 @@ class MetaDataToolsTestCase(unittest.TestCase):
         self.Root = Path(__file__).parent
         self.Temp = os.path.join(self.Root, 'temp_meta_data_tools')
         self.TestDataDir = os.path.join(self.Root, 'test_data')
+        self.ErrorCheckDir = os.path.join(self.Root, 'error_check')
         self.Test2ColFile = os.path.join(self.TestDataDir, 'test_tsv_2_cols.txt')
         self.Test5ColIncLabelDataFrame = MDT.read_raw_data(os.path.join(self.TestDataDir, 'test_tsv_5_cols_inc_labels.txt'))
+        self.TestTokenizedLabelledDataFrame = MDT.read_raw_data(os.path.join(self.TestDataDir, 'test_tokenized_and_labelled.txt'))
         self.TestNoDescDataFrame = MDT.read_raw_data(os.path.join(self.TestDataDir, 'test_no_desc_tsv.txt'))
         self.Test1ColDataFrame = MDT.read_raw_data(os.path.join(self.TestDataDir, 'test_tsv_1_col.txt'))
         self.Test2ColDataFrame = MDT.read_raw_data(self.Test2ColFile)
@@ -176,7 +178,7 @@ class MetaDataToolsTestCase(unittest.TestCase):
             self.assertTrue(expected, actual)
 
     def test_dict_of_field_descriptors_dfs_from_files(self):
-        src_path = self.TestDataDir
+        src_path = self.ErrorCheckDir
         target_dir = self.Temp
         prefix = 'dummy'
 
@@ -200,7 +202,7 @@ class MetaDataToolsTestCase(unittest.TestCase):
             self.assertEqual(expected, actual)
 
     def test_list_of_field_descriptors_dfs_from_files(self):
-        src_path = self.TestDataDir
+        src_path = self.ErrorCheckDir
         target_dir = self.Temp
         prefix = 'dummy'
 
@@ -227,8 +229,38 @@ class MetaDataToolsTestCase(unittest.TestCase):
         dataframes, errors = MDT.list_of_field_descriptors_dfs_from_files(
             src_path=self.TestDataDir, target_dir=self.Temp, prefix='from_list', to_save=False)
 
-        MDT.collate_dfs_from_list(df_list=dataframes, save_dir=self.Temp, save_name='all_data.txt', prefix='from_list_')
+        df = MDT.collate_dfs_from_list(df_list=dataframes)
+        expected_columns = ['Source', 'Fields', 'Tokenized Source', 'Descriptors', 'Tokenized Descriptors']
+        compare_column_names = (df.columns == expected_columns)
+
+        self.assertTrue(compare_column_names.all())
+
+    def test_save_df(self):
+        dataframes, errors = MDT.list_of_field_descriptors_dfs_from_files(
+            src_path=self.TestDataDir, target_dir=self.Temp, prefix='from_list', to_save=False)
+
+        df = MDT.collate_dfs_from_list(df_list=dataframes)
+
+        MDT.save_df(df=df, save_dir=self.Temp, save_name='all_data.txt', prefix='from_list_')
         self.assertTrue(Path(os.path.join(self.Temp, 'from_list_all_data.txt')).is_file())
+
+    def test_prep_df_for_bert(self):
+        df = MDT.field_tokenized_descriptor_df_from_df(
+            self.TestTokenizedLabelledDataFrame, 'test_name', is_labelled=True, sep=' ')
+
+        df = MDT.prep_df_for_bert(df)
+
+        with self.subTest():
+            testing_for = 'prep_df_for_bert expected columns'
+            print(f'Testing for: {testing_for}')
+            expected_columns = ['category', 'text']
+            self.assertTrue((expected_columns == df.columns).all())
+
+        with self.subTest():
+            testing_for = 'prep_df_for_bert no commas'
+            print(f'Testing for: {testing_for}')
+            for column in df.columns:
+                self.assertFalse(df[column].str.contains(',').any())
 
 
 if __name__ == '__main__':
