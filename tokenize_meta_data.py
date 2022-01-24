@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument('-td', '--target_dir', type=str, default=Path(__file__).parent,
                         help='Working directory for saving files etc')
     parser.add_argument('-ext', '--suffix', type=str, default='.txt',
-                        help='Working directory for saving files etc')
+                        help='Suffix/extension for saving files')
 
     args = parser.parse_args()
 
@@ -65,14 +65,15 @@ def main():
         for err in errors:
             print(err)
 
-        save_name = f'collated.tsv'
+        save_name = f'collated{suffix}'
 
-        collated_dfs = MetaDataTools.collate_dfs_from_list(df_list=df_list, save_name=save_name, save_dir=target_dir,
-                                                           prefix=prefix)
+        collated_dfs = MetaDataTools.collate_dfs_from_list(df_list=df_list)
 
         if len(collated_dfs) > 0:
             print('First few records in collated DataFrames:\n')
             print(collated_dfs.head())
+
+        MetaDataTools.save_df(df=collated_dfs, save_name=save_name, save_dir=target_dir, prefix=prefix)
 
 
 if __name__ == '__main__':
